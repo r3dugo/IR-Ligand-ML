@@ -28,16 +28,6 @@ import signal
 import os
 import argparse
 
-# Import for server health check
-try:
-    from utils.loqi import check_server_health
-except Exception:
-    def check_server_health():
-        # Fallback when `utils.loqi` isn't available in this environment.
-        # Return a synthetic "available" response so processing continues;
-        # actual generation will still fail if the LoQI client is missing.
-        return {'available': True, 'url': 'local', 'response': {'gpu': False}, 'response_time': 0.0}
-
 # Set up logging
 def setup_logging(output_dir):
     """Set up comprehensive logging"""
@@ -103,20 +93,6 @@ class LoQIBatchProcessor:
         self.save_checkpoint()
         self.save_results()
         sys.exit(0)
-    
-    def check_server_health(self):
-        """Check LoQI server availability"""
-        self.logger.info("Checking LoQI server health...")
-        health = check_server_health()
-        
-        if not health['available']:
-            self.logger.error(f"LoQI server unavailable: {health.get('error', 'Unknown error')}")
-            return False
-        
-        self.logger.info(f"✅ LoQI server available at {health['url']}")
-        self.logger.info(f"   GPU: {health['response']['gpu']}")
-        self.logger.info(f"   Response time: {health['response_time']:.3f}s")
-        return True
     
     def load_checkpoint(self):
         """Load previous progress if available"""
