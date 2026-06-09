@@ -460,6 +460,30 @@ class LoQIBatchProcessor:
             self.logger.error(f"Failed to read CSV {csv_file}: {e}")
             return False
 
+        # Check for columns id/smiles
+        try:
+            with open(csv_file, newline='', encoding='utf-8', errors='replace') as f:
+                reader = csv.DictReader(f)
+                for r in reader:
+                    # Normalise keys to lowercase for consistent access
+                    r_norm = { (k.strip().lower() if k else k): v for k, v in r.items() }
+                    rows.append(r_norm)
+        except Exception as e:
+            self.logger.error(f"Failed to read CSV {csv_file}: {e}")
+            return False
+
+        # Check required CSV columns
+        if not rows:
+            self.logger.error(f"CSV is empty: {csv_file}")
+            return False
+
+        required_cols = {"id", "smiles"}
+        missing_cols = required_cols - set(rows[0].keys())
+
+        if missing_cols:
+            self.logger.error(f"CSV is missing required columns: {sorted(missing_cols)}")
+            return False
+
         total_molecules = len(rows)
         self.logger.info(f"Loaded {total_molecules} molecules")
 
@@ -592,9 +616,9 @@ def main():
     default_loqi_dir = script_dir / "LoQI"
 
     parser.add_argument(
-    "--sample-script",
-    default=str(default_loqi_dir / "scripts" / "sample_conformers.py"),
-    help="Path to LoQI sample_conformers.py"
+        "--sample-script",
+        default=str(default_loqi_dir / "scripts" / "sample_conformers.py"),
+        help="Path to LoQI sample_conformers.py"
     )
 
     parser.add_argument(
