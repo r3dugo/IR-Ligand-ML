@@ -541,12 +541,15 @@ class LoQIBatchProcessor:
     
     def print_summary(self, total_molecules, total_time):
         """Print final summary"""
+        total_attempted = self.processed + self.failed
+        success_rate = self.processed / total_attempted * 100 if total_attempted > 0 else 0.0
+
         self.logger.info("\n" + "="*80)
         self.logger.info("LoQI BATCH CONFORMER GENERATION COMPLETE")
         self.logger.info("="*80)
         self.logger.info(f"Successfully processed: {self.processed} molecules")
         self.logger.info(f"Failed: {self.failed} molecules")
-        self.logger.info(f"Success rate: {self.processed/(self.processed+self.failed)*100:.1f}%")
+        self.logger.info(f"Success rate: {success_rate:.1f}%")
         self.logger.info(f"Total wall time: {total_time/3600:.1f} hours")
         self.logger.info(f"Average generation time: {self.total_time/self.processed:.2f}s per molecule" if self.processed > 0 else "")
         self.logger.info(f"Output directory: {self.output_dir}")
