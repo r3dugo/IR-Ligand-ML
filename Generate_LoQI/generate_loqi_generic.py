@@ -15,7 +15,6 @@ Generate_LoQI/
     └── data/loqi.ckpt
 """
 
-
 import sys
 import csv
 from pathlib import Path
@@ -594,16 +593,22 @@ def main():
 
     print("LoQI Large-Scale Molecule Conformer Generation")
     print("="*50)
+
     # CLI: allow choosing CSVs and output location
     parser = argparse.ArgumentParser(description="Run LoQI conformer generation on one or more CSVs")
-    parser.add_argument('--csvs', nargs='+',
+
+    parser.add_argument('--csvs', nargs='+', required=True,
                         help='One or more CSV filenames or paths to process')
+    
     parser.add_argument('--output-base', default=None,
                         help='Base output directory. Per-file dirs will be created inside this. Defaults to script dir')
+    
     parser.add_argument('--n-conformers', type=int, default=12, help='Number of conformers to generate')
+
     parser.add_argument('--batch-size', type=int, default=50, help='Checkpoint batch size')
 
-    # Scripts should be found in the LoQI repo relative to this script, but allow overrides via CLI for flexibility.
+    # Scripts should be found in the LoQI repo relative to this script,
+    # but allow overrides via CLI for flexibility.
     script_dir = Path(__file__).resolve().parent
     default_loqi_dir = script_dir / "LoQI"
 
@@ -612,24 +617,56 @@ def main():
     default=str(default_loqi_dir / "scripts" / "sample_conformers.py"),
     help="Path to LoQI sample_conformers.py"
     )
+
     parser.add_argument(
         "--config",
         default=str(default_loqi_dir / "scripts" / "conf" / "loqi" / "loqi.yaml"),
         help="Path to LoQI config YAML"
     )
+
     parser.add_argument(
         "--ckpt",
         default=str(default_loqi_dir / "data" / "loqi.ckpt"),
         help="Path to LoQI checkpoint"
     )
+
     parser.add_argument(
         "--convert-sdf-to-xyz",
         action='store_true',
         help="If set, convert SDF outputs to multi-block XYZ files (requires RDKit)"
     )
+
     args = parser.parse_args()
 
-    base_dir = Path(__file__).parent
+    base_dir = Path(__file__).resolve().parent
+
+    # Check LoQI files before starting any processing
+    required_files = {
+        "LoQI sample script": Path(args.sample_script),
+        "LoQI config": Path(args.config),
+        "LoQI checkpoint": Path(args.ckpt),
+    }
+
+    missing_files = [
+        f"{label}: {path}"
+        for label, path in required_files.items()
+        if not path.exists()
+    ]
+
+    if missing_files:
+        print("Missing required LoQI files:")
+        for item in missing_files:
+            print(f"  - {item}")
+        print("\nEither clone/download LoQI into:")
+        print(f"  {default_loqi_dir}")
+        print("\nor pass paths manually with:")
+        print("  --sample-script /path/to/sample_conformers.py")
+        print("  --config /path/to/loqi.yaml")
+        print("  --ckpt /path/to/loqi.ckpt")
+        return
+
+    # Resolve and check CSVs before running LoQIBatchProcessor
+    csv_paths = []
 
     for csv_entry in args.csvs:
         csv_path = Path(csv_entry)
@@ -640,11 +677,21 @@ def main():
             print(f"Input file not found: {csv_path}")
             continue
 
-        if args.output_base:
-            out_base = Path(args.output_base)
-        else:
-            out_base = base_dir
+        csv_paths.append(csv_path)
 
+    if not csv_paths:
+        print("No valid input CSV files found. Exiting.")
+        return
+
+    # Resolve output base
+    if args.output_base:
+        out_base = Path(args.output_base)
+    else:
+        out_base = base_dir
+
+    out_base.mkdir(parents=True, exist_ok=True)
+
+    for csv_path in csv_paths:
         output_dir = Path(out_base) / f"conformers_full_loqi_{args.n_conformers}conf_{csv_path.stem}"
 
         # Initialise processor for this dataset
