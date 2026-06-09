@@ -460,18 +460,6 @@ class LoQIBatchProcessor:
             self.logger.error(f"Failed to read CSV {csv_file}: {e}")
             return False
 
-        # Check for columns id/smiles
-        try:
-            with open(csv_file, newline='', encoding='utf-8', errors='replace') as f:
-                reader = csv.DictReader(f)
-                for r in reader:
-                    # Normalise keys to lowercase for consistent access
-                    r_norm = { (k.strip().lower() if k else k): v for k, v in r.items() }
-                    rows.append(r_norm)
-        except Exception as e:
-            self.logger.error(f"Failed to read CSV {csv_file}: {e}")
-            return False
-
         # Check required CSV columns
         if not rows:
             self.logger.error(f"CSV is empty: {csv_file}")
