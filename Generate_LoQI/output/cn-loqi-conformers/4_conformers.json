@@ -1,0 +1,23 @@
+{
+ "id": "4",
+ "smiles": "Cc2ccc(c1ccc(Cl)cc1)nc2",
+ "n_conformers": 12,
+ "energies_kcal": [
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "generation_time": 70.9636857509613,
+ "energy_range": 0.0,
+ "sdf_file": "4_conformers.sdf",
+ "xyz_file": ""
+}
